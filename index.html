@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Try to Submit... If You Can! 😂</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            height: 70%;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        h1 {
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            font-size: clamp(24px, 5vw, 32px);
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .button-container {
+            position: relative;
+            height: 150px;
+            margin-top: 20px;
+            touch-action: none; /* Prevents default touch actions */
+        }
+        #submit-btn {
+            position: absolute;
+            padding: 12px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent; /* Removes tap highlight on mobile */
+        }
+        .message {
+            margin-top: 20px;
+            color: #ff6b6b;
+            font-weight: bold;
+            min-height: 20px;
+        }
+        .attempts {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .noob-message {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ff6b6b;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(40px, 10vw, 60px);
+            font-weight: bold;
+            z-index: 100;
+            transform: translateY(-100%);
+            transition: transform 0.5s ease;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .noob-message.show {
+            transform: translateY(0);
+        }
+        
+        /* Mobile-specific styles */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .button-container {
+                height: 120px; /* Larger touch area on mobile */
+            }
+            
+            #submit-btn {
+                padding: 15px 30px; /* Larger button on mobile */
+                font-size: 18px;
+            }
+            
+            /* Make confetti work better on mobile */
+            @keyframes fall-mobile {
+                0% {
+                    transform: translateY(0) rotate(0deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(100vh) rotate(720deg);
+                    opacity: 0;
+                }
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>The Impossible Form</h1>
+        <p>Please enter your name and try to submit the form... if you can! 😜</p>
+        
+        <form id="impossible-form" onsubmit="return false;">
+            <input type="text" id="name" placeholder="Your name here..." required>
+            
+            <div class="button-container">
+                <button id="submit-btn">Done!</button>
+            </div>
+            
+            <div class="message" id="message"></div>
+            <div class="attempts" id="attempts">Attempts: 0</div>
+        </form>
+        
+        <div class="noob-message" id="noob-message">YOU WIN NOOB!🤡</div>
+    </div>
+
+    <script>
+        const button = document.getElementById('submit-btn');
+        const buttonContainer = document.querySelector('.button-container');
+        const message = document.getElementById('message');
+        const attemptsDisplay = document.getElementById('attempts');
+        let attempts = 0;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Messages to show as user tries to click the button
+        const messages = [
+            "Nice try! 😂",
+            "Almost got me! 🤣",
+            "Too slow! 😜",
+            "Not even close! 🤪",
+            "Keep trying! 😆",
+            "You'll never catch me! 🏃‍♂️",
+            "Oops, missed again! 🙈",
+            "Getting frustrated yet? 😏",
+            "I can do this all day! ⏱️",
+            "You're persistent, I'll give you that! 👏"
+        ];
+        
+        // Set initial position
+        button.style.left = "50%";
+        button.style.top = "50%";
+        button.style.transform = "translate(-50%, -50%)";
+        
+        // Track mouse/touch position throughout the document
+        const moveEvent = isMobile ? 'touchmove' : 'mousemove';
+        document.addEventListener(moveEvent, (e) => {
+            // Get position (handle both mouse and touch)
+            const clientX = isMobile ? e.touches[0].clientX : e.clientX;
+            const clientY = isMobile ? e.touches[0].clientY : e.clientY;
+            
+            // Get button position and dimensions
+            const buttonRect = button.getBoundingClientRect();
+            const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+            const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+            
+            // Calculate distance between pointer and button
+            const distX = clientX - buttonCenterX;
+            const distY = clientY - buttonCenterY;
+            const distance = Math.sqrt(distX * distX + distY * distY);
+            
+            // Check if name is "noob" - if so, don't move the button
+            const nameInput = document.getElementById('name');
+            if (nameInput.value.toLowerCase() === "noob") {
+                return;
+            }
+            
+            // If pointer gets close to the button, move it away
+            // Increased boundary distance for more aggressive evasion
+            const boundaryDistance = isMobile ? 300 : 400;
+            if (distance < boundaryDistance) {
+                moveButtonAway(clientX, clientY);
+            }
+        });
+        
+        // Function to move the button away from cursor/touch
+        function moveButtonAway(pointerX, pointerY) {
+            // Calculate container boundaries
+            const buttonRect = button.getBoundingClientRect();
+            const containerRect = buttonContainer.getBoundingClientRect();
+            const containerWidth = containerRect.width - buttonRect.width;
+            const containerHeight = containerRect.height - buttonRect.height;
+            
+            // Calculate button center
+            const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+            const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+            
+            // Calculate distance vector
+            const distX = pointerX - buttonCenterX;
+            const distY = pointerY - buttonCenterY;
+            
+            // Move in the opposite direction of the pointer with increased speed
+            let newX, newY;
+            
+            // More aggressive evasion algorithm
+            if (Math.abs(distX) > Math.abs(distY)) {
+                // Pointer approaching horizontally
+                newX = distX > 0 ? 0 : containerWidth;
+                // Add some vertical randomness to make it harder to predict
+                newY = Math.random() * containerHeight;
+            } else {
+                // Pointer approaching vertically
+                newX = Math.random() * containerWidth;
+                newY = distY > 0 ? 0 : containerHeight;
+            }
+            
+            // Apply new position with a slight delay to make it harder to catch
+            setTimeout(() => {
+                button.style.left = `${newX}px`;
+                button.style.top = `${newY}px`;
+                button.style.transform = "none";
+                
+                // Update attempts and message
+                attempts++;
+                attemptsDisplay.textContent = `Attempts: ${attempts}`;
+                
+                // Show random message
+                const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                message.textContent = randomMessage;
+            }, Math.random() * 50); // Small random delay makes it unpredictable
+        }
+        
+        // Add continuous movement to make the button harder to catch
+        setInterval(() => {
+            const nameInput = document.getElementById('name');
+            if (nameInput.value.toLowerCase() === "noob") {
+                return;
+            }
+            
+            // Small random movement even when not being chased
+            const buttonRect = button.getBoundingClientRect();
+            const containerRect = buttonContainer.getBoundingClientRect();
+            const containerWidth = containerRect.width - buttonRect.width;
+            const containerHeight = containerRect.height - buttonRect.height;
+            
+            // Get current position
+            let currentX = parseFloat(button.style.left) || containerWidth / 2;
+            let currentY = parseFloat(button.style.top) || containerHeight / 2;
+            
+            // Add small random movement
+            currentX += (Math.random() - 0.5) * 20;
+            currentY += (Math.random() - 0.5) * 20;
+            
+            // Keep within boundaries
+            currentX = Math.max(0, Math.min(containerWidth, currentX));
+            currentY = Math.max(0, Math.min(containerHeight, currentY));
+            
+            // Apply position
+            button.style.left = `${currentX}px`;
+            button.style.top = `${currentY}px`;
+            button.style.transform = "none";
+        }, 1000); // Move slightly every second
+        
+        // Add direct hover/touch detection to ensure button always moves
+        const hoverEvent = isMobile ? 'touchstart' : 'mouseover';
+        button.addEventListener(hoverEvent, (e) => {
+            const nameInput = document.getElementById('name');
+            if (nameInput.value.toLowerCase() === "noob") {
+                return;
+            }
+            
+            // Get position (handle both mouse and touch)
+            const clientX = isMobile ? e.touches[0].clientX : e.clientX;
+            const clientY = isMobile ? e.touches[0].clientY : e.clientY;
+            
+            // Move button immediately when hovered/touched
+            moveButtonAway(clientX, clientY);
+            
+            // Prevent default touch behavior on mobile
+            if (isMobile) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Disable click/tap by making it disappear momentarily
+        const clickEvent = isMobile ? 'touchstart' : 'mousedown';
+        button.addEventListener(clickEvent, (e) => {
+            // Check if name is "noob" - if so, allow the click
+            const nameInput = document.getElementById('name');
+            if (nameInput.value.toLowerCase() === "noob") {
+                // Show the large NOOB message
+                const noobMessage = document.getElementById('noob-message');
+                noobMessage.classList.add('show');
+                
+                // Play with the button a bit for fun
+                button.style.backgroundColor = '#ff6b6b';
+                button.textContent = 'NOOB!';
+                
+                // Change the regular message too
+                message.textContent = `Congrats, noob! You found the secret! 🎉`;
+                message.style.color = '#4CAF50';
+                
+                // Add confetti effect
+                const confettiCount = isMobile ? 50 : 100; // Less confetti on mobile for better performance
+                for (let i = 0; i < confettiCount; i++) {
+                    createConfetti();
+                }
+                
+                return true;
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Make button temporarily invisible
+            button.style.opacity = "0";
+            
+            // Move to random position
+            setTimeout(() => {
+                const containerRect = buttonContainer.getBoundingClientRect();
+                const buttonRect = button.getBoundingClientRect();
+                
+                const newX = Math.random() * (containerRect.width - buttonRect.width);
+                const newY = Math.random() * (containerRect.height - buttonRect.height);
+                
+                button.style.left = `${newX}px`;
+                button.style.top = `${newY}px`;
+                button.style.opacity = "1";
+                
+                attempts++;
+                attemptsDisplay.textContent = `Attempts: ${attempts}`;
+                
+                const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                message.textContent = randomMessage;
+            }, 100);
+            
+            return false;
+        }, { passive: false });
+        
+        // Easter egg: If they try to tab to the button and press Enter
+        button.addEventListener('focus', () => {
+            const nameInput = document.getElementById('name');
+            if (nameInput.value.toLowerCase() === "noob") {
+                return;
+            }
+            
+            button.style.left = `${Math.random() * (buttonContainer.offsetWidth - button.offsetWidth)}px`;
+            button.style.top = `${Math.random() * (buttonContainer.offsetHeight - button.offsetHeight)}px`;
+            button.blur(); // Remove focus
+            message.textContent = "Nice try using the keyboard! 😎";
+        });
+        
+        // Disable right-click on button
+        button.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+        
+        // Function to create confetti particles
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.style.position = 'fixed';
+            confetti.style.width = isMobile ? '8px' : '10px'; // Smaller on mobile
+            confetti.style.height = isMobile ? '8px' : '10px';
+            confetti.style.backgroundColor = getRandomColor();
+            confetti.style.borderRadius = '50%';
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            confetti.style.top = '-10px';
+            confetti.style.zIndex = '1000';
+            document.body.appendChild(confetti);
+            
+            // Animate the confetti
+            const animationDuration = Math.random() * 3 + 2; // 2-5 seconds
+            const animationName = isMobile ? 'fall-mobile' : 'fall';
+            confetti.style.animation = `${animationName} ${animationDuration}s linear forwards`;
+            
+            // Add keyframe animation
+            if (!document.getElementById('confetti-animation')) {
+                const style = document.createElement('style');
+                style.id = 'confetti-animation';
+                style.innerHTML = `
+                    @keyframes fall {
+                        0% {
+                            transform: translateY(0) rotate(0deg);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: translateY(${window.innerHeight}px) rotate(720deg);
+                            opacity: 0;
+                        }
+                    }
+                    @keyframes fall-mobile {
+                        0% {
+                            transform: translateY(0) rotate(0deg);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: translateY(${window.innerHeight}px) rotate(720deg);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Remove confetti after animation
+            setTimeout(() => {
+                confetti.remove();
+            }, animationDuration * 1000);
+        }
+        
+        // Function to get random color
+        function getRandomColor() {
+            const colors = ['#ff6b6b', '#4CAF50', '#3498db', '#f1c40f', '#9b59b6', '#e67e22'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // Prevent zooming on double-tap (mobile)
+        document.addEventListener('touchend', (e) => {
+            if (e.target === button) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent pull-to-refresh on mobile
+        document.body.style.overscrollBehavior = 'none';
+    </script>
+</body>
+</html>
